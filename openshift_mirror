@@ -1,0 +1,69 @@
+#!/usr/bin/env python3
+
+"""
+Utility for mirroring OpenShift 4 content.
+"""
+
+import logging
+import logging.config
+import os
+
+from app.bundle import OpenShiftMirrorBundle
+from app.cli import CLI
+from app.runtime import OpenShiftMirrorRuntime
+
+
+LOGGING_CONFIG = {
+    'version': 1,
+    'formatters': {
+        'simple': {
+            'format':
+                '%(asctime)-8s | %(levelname)-8s | %(name)-10s | %(message)s',
+            'datefmt': '%H:%M:%S',
+        },
+    },
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+            'level': os.environ.get('OPENSHIFT_MIRROR_LOGLEVEL', 'INFO'),
+            'formatter': 'simple',
+        },
+    },
+    'loggers': {
+        'app': {
+            'level': os.environ.get('OPENSHIFT_MIRROR_LOGLEVEL', 'INFO'),
+            'handlers': [
+                'console',
+            ],
+            'propagate': 'no',
+        },
+    },
+}
+
+logging.config.dictConfig(LOGGING_CONFIG)
+logger = logging.getLogger('app')
+
+
+if __name__ == '__main__':
+    cli = CLI()
+    known_args, extra_args = cli.parse_known_args()
+
+    if known_args.action == 'bundle':
+        b = OpenShiftMirrorBundle(
+            openshift_version=known_args.openshift_version,
+            pull_secret=known_args.pull_secret,
+            platform=known_args.platform,
+            catalogs=known_args.catalogs,
+            bundle_dir=known_args.bundle_dir,
+            skip_existing=known_args.skip_existing,
+            skip_release=known_args.skip_release,
+            skip_catalogs=known_args.skip_catalogs,
+            skip_rhcos=known_args.skip_rhcos,
+        )
+        b.bundle()
+    elif known_args.action == 'build':
+        r = OpenShiftMirrorRuntime()
+        r.build_container()
+    elif known_args.action == 'shell':
+        r = OpenShiftMirrorRuntime()
+        r.shell()
