@@ -9,7 +9,7 @@ ENV LANGUAGE=en_US.UTF-8
 LABEL \
     name="openshift4-mirror" \
     description="Utility for mirroring OpenShift 4 content" \
-    maintainer="Jared Hocutt (@jaredhocutt)"
+    maintainer="RedHat4Gov Team"
 
 USER root
 
