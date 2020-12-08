@@ -1,5 +1,10 @@
 # OpenShift 4 Mirror
 
+# Run this app as a container in Podman
+```bash
+podman run -it quay.io/redhatgov/openshift4_mirror:latest
+```
+
 ## Initial Setup
 
 Install system dependencies.
