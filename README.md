@@ -25,8 +25,8 @@ From an internet connected host, with Podman installed (tested on v2.1.1):
 ```bash
 podman run -it -v ./:/app/bundle:Z quay.io/redhatgov/openshift4_mirror:latest
 ```
-*Note: if no `--skip*` flags are provided, the download can be over 120Gb
-Obtain your OpenShift pull secret from [Red Hat OpenShift Cluster Manager](cloud.redhat.com/openshift), you'll need to provide them to the `openshift_mirror` command below.
+* Note: if no `--skip*` flags are provided, the download can be over 120Gb  
+* Note: Obtain your OpenShift pull secret from [Red Hat OpenShift Cluster Manager](cloud.redhat.com/openshift), you'll need to provide them to the `openshift_mirror` command below.
 
 
 Run this from within the `openshift4_mirror` container:
