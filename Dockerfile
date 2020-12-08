@@ -25,7 +25,7 @@ RUN \
     && echo 'export PS1="\n\[\e[34m\]\u\[\e[m\] at \[\e[32m\]\h\[\e[m\] in \[\e[33m\]\w\[\e[m\] \[\e[31m\]\n\\$\[\e[m\] "' >> /root/.bashrc \
     && mkdir -p /app/app
 
-COPY app/* /app/app
+COPY app/* /app/app/
 
 # Install Python dependencies
 WORKDIR /app
