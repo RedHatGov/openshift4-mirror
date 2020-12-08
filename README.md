@@ -1,4 +1,23 @@
 # OpenShift 4 Mirror
+What is this?!?
+OpenShift 4 Mirror is an easy way to download all files required to do an OpenShift 4.x installation into a disconnected environment (no internet access). For connected OpenShift installations, you won't need this and should just follow the Docs on getting started here: [OpenShift Docs](https://docs.openshift.com).
+
+This is a Python based app neatly bundled into a container image that allows you to choose how much or how little of the files required for a disconnected installation you would like to download.
+
+What this app DOES do for a given release of OpenShift:
+* Downloads the RHCOS virtual machine image
+* Downloads the OpenShift Release images needed to run a basic cluster
+* Downloads the Catalog images for images supporting the OpenShift Operator Hub Catalog
+* Downloads the `oc` tool for interacting with OpenShift
+* Downloads the `openshift-install` tool required for installing OpenShift
+* Downloads the `kubectl` tool that some Kubernetes folks may prefer over use of the `oc` tool
+* Creates the symlinks used by the installer to associate image digests with human readable image names
+
+What this app DOES NOT do:
+* Convert the RHCOS virtual machine image to a provider specific format (ie AMI for AWS)
+* Obtain your OpenShift Pull secret (you'll need to do this on your own before running the tool)
+* Does not "hydrate" the disconnected registry with the images it downloads, it simply creates the bundle you'll need to get started on the disconnected side.
+
 
 ## Run this app as a container in Podman
 
