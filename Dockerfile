@@ -1,4 +1,4 @@
-FROM registry.access.redhat.com/ubi8/ubi:8.2
+FROM registry.access.redhat.com/ubi8/ubi:latest
 
 ENV PYCURL_SSL_LIBRARY=openssl
 
