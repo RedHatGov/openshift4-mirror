@@ -1,3 +1,5 @@
+[![Docker Repository on Quay](https://quay.io/repository/redhatgov/openshift4_mirror/status "Docker Repository on Quay")](https://quay.io/repository/redhatgov/openshift4_mirror)
+
 # OpenShift 4 Mirror
 What is this?!?
 OpenShift 4 Mirror is an easy way to download all files required to do an OpenShift 4.x installation into a disconnected environment (no internet access). For connected OpenShift installations, you won't need this and should just follow the Docs on getting started here: [OpenShift Docs](https://docs.openshift.com).
