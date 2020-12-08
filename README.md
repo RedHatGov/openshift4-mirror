@@ -1,39 +1,18 @@
 # OpenShift 4 Mirror
 
-# Run this app as a container in Podman
+## Run this app as a container in Podman
+
+From an internet connected host, with Podman installed (tested on v2.1.1):
 ```bash
-podman run -it quay.io/redhatgov/openshift4_mirror:latest
+podman run -it -v ./:/app/bundle:Z quay.io/redhatgov/openshift4_mirror:latest
 ```
+*Note: if no `--skip*` flags are provided, the download can be over 120Gb
+Obtain your OpenShift pull secret from [Red Hat OpenShift Cluster Manager](cloud.redhat.com/openshift), you'll need to provide them to the `openshift_mirror` command below.
 
-## Initial Setup
 
-Install system dependencies.
-
+Run this from within the `openshift4_mirror` container:
+* Note, refer to options flags below to determine what images you'd like to mirror
 ```bash
-sudo yum install -y git python3 python3-pip
-sudo pip3 install pipenv
-```
-
-Clone the repository.
-
-```bash
-git clone https://github.com/jaredhocutt/openshift4-mirror.git
-```
-
-Install the Python dependencies.
-
-```bash
-cd openshift4-mirror
-pipenv install
-```
-
-## Usage
-
-Activate the virtual Python environment and run the bundle automation.
-
-```bash
-pipenv shell
-
 ./openshift_mirror bundle \
     --openshift-version 4.6.3 \
     --platform aws \
@@ -41,26 +20,57 @@ pipenv shell
     --pull-secret '{"auths":{"cloud.openshift.com":{"auth":"b3Blb...'
 ```
 
-For additional options, check out the help pages.
+Implemented providers for the `--platform`  flag are:
+* aws
+* azure
+* vmware
+* openstack
+* metal
+* gcp
 
+After the download is finished:
 ```bash
-./openshift_mirror -h
-usage: openshift_mirror [-h] {bundle,build,shell} ...
-
-Utility for mirroring OpenShift 4 content.
-
-positional arguments:
-  {bundle,build,shell}
-    bundle              bundle the OpenShift content
-    build               build the container image
-    shell               open a shell in the container environment
-
-optional arguments:
-  -h, --help            show this help message and exit
+exit
 ```
 
-At the moment, `build` and `shell` don't do anything, so what you really want
-to check out is the help page for `bundle`.
+The result of this will be a local folder named by the OpenShift release, (4.6.3 in this example). It contains all files needed to move into a disconnected environment for an OpenShift 4.x deployment. Note, your Red Hat OpenShift `pull-secret.json` is also in this folder. Below is a tree output of a mirror operation that skips the catalog:
+```
+4.6.3/
+├── bin
+│   ├── kubectl
+│   ├── oc
+│   └── openshift-install
+├── catalogs
+├── clients
+│   ├── openshift-client-linux.tar.gz
+│   ├── openshift-install-linux.tar.gz
+│   └── sha256sum.txt
+├── pull-secret.json
+├── release
+│   ├── config
+│   │   └── signature-sha256-14986d2b9c112ca9.yaml
+│   └── v2
+│       └── openshift
+│           └── release
+│               ├── blobs
+│               │   ├── sha256:014ff151e98efa033f39aa6a68c816935bf00bf50a8437231f4c6cbc3ced208a
+│               │   ├── sha256:0176ba5faf8ec9c316b38331848d27c9fe39fe491cc9facb97426ff8d8f226f9
+|               │   ├── sha256:ff59396bcfee55afbfa3c761b7ba9cd4899d495081c002d829f959302471331b
+│               │   └── sha256:fff7389977f8367b57b539f747979d274626a8f843fe4d9d9096e6fb531793fb
+│               └── manifests
+│                   ├── 4.6.3 -> sha256:14986d2b9c112ca955aaa03f7157beadda0bd3c089e5e1d56f28020d2dd55c52
+│                   ├── 4.6.3-aws-ebs-csi-driver -> sha256:5e1c501e182b4c74a66c840991190c3179f831bbf5825d2837c7ca8d50dd61c9
+│                   ├── 4.6.3-aws-ebs-csi-driver-operator -> sha256:f014470621514d00a3baf2a0cc72492b375e39925cf89475b6ee939b7d2bfd95
+│                   └── sha256:fff7389977f8367b57b539f747979d274626a8f843fe4d9d9096e6fb531793fb
+└── rhcos
+    └── rhcos-aws.x86_64.vmdk.gz
+```
+For convenience, create a tarball from this directory:
+```bash
+tar -zcvf openshift-4-6-3.tar.gz 4.6.3
+```
+
+## openshift4_mirror help info
 
 ```bash
 ./openshift_mirror bundle -h

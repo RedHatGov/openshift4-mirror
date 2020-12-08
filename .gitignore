@@ -342,3 +342,5 @@ $RECYCLE.BIN/
 # Windows shortcuts
 *.lnk
 
+# OpenShift pull secrets
+pull-secret.json
