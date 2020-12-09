@@ -156,6 +156,11 @@ class CLI():
             help='skip downloading of catalog content',
         )
         parser.add_argument(
+            '--skip-catalog',
+            action='store_true',
+            help='skip downloading of catalog content, same as --skip-catalogs',
+        )
+        parser.add_argument(
             '--skip-rhcos',
             action='store_true',
             help='skip downloading of RHCOS image',
