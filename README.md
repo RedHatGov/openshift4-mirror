@@ -54,7 +54,7 @@ After the download is finished:
 exit
 ```
 
-The result of this will be a local folder named by the OpenShift release, (4.6.3 in this example). It contains all files needed to move into a disconnected environment for an OpenShift 4.x deployment. Note, your Red Hat OpenShift `pull-secret.json` is also in this folder. Below is a tree output of a mirror operation that skips the catalog:
+The result of this will be a local folder named by the OpenShift release, (4.6.3 in this example). It contains all files needed to move into a disconnected environment for an OpenShift 4.x deployment. Below is a tree output of a mirror operation that skips the catalog:
 ```
 4.6.3/
 ├── bin
