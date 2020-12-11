@@ -90,12 +90,15 @@ class OpenShiftMirrorBundle(OpenShiftMirrorBase):
             'pull-secret.json',
         )
 
+        self.pull_secret_path = pull_secret_path
+
         logger.info('Saving pull secret to %s', pull_secret_path)
 
         with open(pull_secret_path, 'w') as f:
             json.dump(json.loads(self.pull_secret), f)
 
         return pull_secret_path
+
 
     def _download_client(self, filename, files_to_extract=None):
         """
@@ -274,6 +277,13 @@ class OpenShiftMirrorBundle(OpenShiftMirrorBase):
             ])
 
         logger.info('Finished catalogs download')
+
+    def delete_pull_secret(self):
+        """
+        Remove pull secret from bundle
+        """
+        if os.path.exists(self.pull_secret_path):
+            os.remove(self.pull_secret_path)
 
     def bundle(self):
         """
