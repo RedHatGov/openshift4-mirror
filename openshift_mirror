@@ -61,6 +61,7 @@ if __name__ == '__main__':
             skip_rhcos=known_args.skip_rhcos,
         )
         b.bundle()
+        b.delete_pull_secret()
     elif known_args.action == 'build':
         r = OpenShiftMirrorRuntime()
         r.build_container()
