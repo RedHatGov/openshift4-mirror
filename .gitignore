@@ -344,3 +344,6 @@ $RECYCLE.BIN/
 
 # OpenShift pull secrets
 pull-secret.json
+
+# My crappy tests
+test.py

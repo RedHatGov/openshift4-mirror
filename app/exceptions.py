@@ -19,3 +19,8 @@ class InvalidOpenShiftPlatformError(Exception):
     """
     Exception for invalid OpenShift platform.
     """
+
+class NonSemanticVersionUsedError(Exception):
+    """
+    Exception for using non-semantically versioned release name. Use a numbered release.
+    """
