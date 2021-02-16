@@ -71,6 +71,8 @@ class OpenShiftMirrorBundle(OpenShiftMirrorBase):
             'https://mirror.openshift.com/pub/openshift-v4/clients/ocp-dev-preview'
         ]
 
+        self.nightly_reg = ('quay.io/openshift-release-dev/ocp-release-nightly')
+
     def _create_dir_structure(self):
         """
         Create directory structure for bundle.
@@ -103,6 +105,12 @@ class OpenShiftMirrorBundle(OpenShiftMirrorBase):
         """
         if self.openshift_version == 'latest' or self.openshift_version == 'stable' or self.openshift_version == 'fast':
             raise NonSemanticVersionUsedError
+    
+    def _get_url(self):
+        for url in self.clients_base_url:
+            r = requests.get('/'.join([url, self.openshift_version]))
+            if r.status_code == 200:
+                return url
 
 
     def _download_client(self, filename, files_to_extract=None):
@@ -110,14 +118,8 @@ class OpenShiftMirrorBundle(OpenShiftMirrorBase):
         Download the client with the given filename.
         """
 
-        def _get_url():
-            for url in self.clients_base_url:
-                r = requests.get('/'.join([url, self.openshift_version]))
-                if r.status_code == 200:
-                    return url
-
         download_url = '/'.join([
-            _get_url(),
+            self._get_url(),
             self.openshift_version,
             filename,
         ])
@@ -206,15 +208,26 @@ class OpenShiftMirrorBundle(OpenShiftMirrorBase):
         if self.skip_existing and os.path.exists(output_path):
             logger.info('Found existing release content, skipping download')
         else:
-            subprocess.call([
-                os.path.join(self.bundle_dirs['bin'], 'oc'),
-                'adm',
-                'release',
-                'mirror',
-                '--registry-config', self.pull_secret_path,
-                '--to-dir', self.bundle_dirs['release'],
-                self.openshift_version,
-            ])
+            if re.search('preview', self._get_url()):
+                subprocess.call([
+                    os.path.join(self.bundle_dirs['bin'], 'oc'),
+                    'adm',
+                    'release',
+                    'mirror',
+                    '--registry-config', self.pull_secret_path,
+                    '--from', ':'.join([self.nightly_reg, self.openshift_version]),
+                    '--to-dir', self.bundle_dirs['release'],
+                ])
+            else:
+                subprocess.call([
+                    os.path.join(self.bundle_dirs['bin'], 'oc'),
+                    'adm',
+                    'release',
+                    'mirror',
+                    '--registry-config', self.pull_secret_path,
+                    '--to-dir', self.bundle_dirs['release'],
+                    self.openshift_version,
+                ])
 
         logger.info('Finished release download')
 
