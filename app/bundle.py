@@ -14,7 +14,7 @@ import tarfile
 import requests
 
 from . import OpenShiftMirrorBase, BASE_DIR
-from .exceptions import InvalidOpenShiftPlatformError
+from .exceptions import NonSemanticVersionUsedError
 
 
 logger = logging.getLogger(__name__)
@@ -34,13 +34,13 @@ class OpenShiftMirrorBundle(OpenShiftMirrorBase):
         self.skip_release = skip_release
         self.skip_catalogs = skip_catalogs
         self.skip_rhcos = skip_rhcos
-
+        self._check_version(self.openshift_version)
         if bundle_dir:
             self.bundle_dir = os.path.join(bundle_dir, self.openshift_version)
         else:
             self.bundle_dir = os.path.join(
                 BASE_DIR, 'bundle', self.openshift_version)
-
+       
         self.bundle_dirs = {
             'bin': os.path.join(self.bundle_dir, 'bin'),
             'release': os.path.join(self.bundle_dir, 'release'),
@@ -66,12 +66,12 @@ class OpenShiftMirrorBundle(OpenShiftMirrorBase):
         else:
             self.catalogs = catalogs
 
-        self.clients_base_url = (
-            'https://mirror.openshift.com/pub/openshift-v4/clients/ocp'
-        )
-        self.rhcos_base_url = (
-            'https://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos'
-        )
+        self.clients_base_url = [
+            'https://mirror.openshift.com/pub/openshift-v4/clients/ocp',
+            'https://mirror.openshift.com/pub/openshift-v4/clients/ocp-dev-preview'
+        ]
+
+        self.nightly_reg = ('quay.io/openshift-release-dev/ocp-release-nightly')
 
     def _create_dir_structure(self):
         """
@@ -99,13 +99,27 @@ class OpenShiftMirrorBundle(OpenShiftMirrorBase):
 
         return pull_secret_path
 
+    def _check_version(self, openshift_version):
+        """
+        Check for semantic versioning
+        """
+        if self.openshift_version == 'latest' or self.openshift_version == 'stable' or self.openshift_version == 'fast':
+            raise NonSemanticVersionUsedError
+    
+    def _get_url(self):
+        for url in self.clients_base_url:
+            r = requests.get('/'.join([url, self.openshift_version]))
+            if r.status_code == 200:
+                return url
+
 
     def _download_client(self, filename, files_to_extract=None):
         """
         Download the client with the given filename.
         """
+
         download_url = '/'.join([
-            self.clients_base_url,
+            self._get_url(),
             self.openshift_version,
             filename,
         ])
@@ -132,30 +146,7 @@ class OpenShiftMirrorBundle(OpenShiftMirrorBase):
                 for i in files_to_extract:
                     logger.info('Extracting %s from %s', i, output_path)
                     tar.extract(i, path=self.bundle_dirs['bin'])
-
-    def _rhcos_filename(self):
-        """
-        Generate the RHCOS filename for the given platform.
-        """
-        filename = 'rhcos-{}.x86_64'.format(self.platform)
-
-        if self.platform == 'aws':
-            filename = '{}.vmdk.gz'.format(filename)
-        elif self.platform == 'azure':
-            filename = '{}.vhd.gz'.format(filename)
-        elif self.platform == 'gcp':
-            filename = '{}.tar.gz'.format(filename)
-        elif self.platform == 'metal':
-            filename = '{}.raw.gz'.format(filename)
-        elif self.platform == 'openstack':
-            filename = '{}.qcow2.gz'.format(filename)
-        elif self.platform == 'vmware':
-            filename = '{}.ova'.format(filename)
-        else:
-            raise InvalidOpenShiftPlatformError()
-
-        return filename
-
+    
     def download_clients(self):
         """
         Download the OpenShift installer and client binaries.
@@ -174,13 +165,18 @@ class OpenShiftMirrorBundle(OpenShiftMirrorBase):
         """
         Download the RHCOS image for the given platform.
         """
+        minor = re.search('4\.\d\.\d', self.openshift_version).group(0)
+
+        manifest = 'https://raw.githubusercontent.com/openshift/installer/release-{}/data/data/rhcos.json'.format(minor[0:3])
+
+        j = json.loads(requests.get(manifest).content)
+        rhcos_base_url = j['baseURI']
+        filename = j['images']['{}'.format(self.platform)]['path']
+
         logger.info('Starting RHCOS download')
 
-        filename = self._rhcos_filename()
-        download_url = '/'.join([
-            self.rhcos_base_url,
-            self.openshift_version,
-            'latest',
+        download_url = ''.join([
+            rhcos_base_url,
             filename,
         ])
         output_path = os.path.join(
@@ -212,15 +208,26 @@ class OpenShiftMirrorBundle(OpenShiftMirrorBase):
         if self.skip_existing and os.path.exists(output_path):
             logger.info('Found existing release content, skipping download')
         else:
-            subprocess.call([
-                os.path.join(self.bundle_dirs['bin'], 'oc'),
-                'adm',
-                'release',
-                'mirror',
-                '--registry-config', self.pull_secret_path,
-                '--to-dir', self.bundle_dirs['release'],
-                self.openshift_version,
-            ])
+            if re.search('preview', self._get_url()):
+                subprocess.call([
+                    os.path.join(self.bundle_dirs['bin'], 'oc'),
+                    'adm',
+                    'release',
+                    'mirror',
+                    '--registry-config', self.pull_secret_path,
+                    '--from', ':'.join([self.nightly_reg, self.openshift_version]),
+                    '--to-dir', self.bundle_dirs['release'],
+                ])
+            else:
+                subprocess.call([
+                    os.path.join(self.bundle_dirs['bin'], 'oc'),
+                    'adm',
+                    'release',
+                    'mirror',
+                    '--registry-config', self.pull_secret_path,
+                    '--to-dir', self.bundle_dirs['release'],
+                    self.openshift_version,
+                ])
 
         logger.info('Finished release download')
 
